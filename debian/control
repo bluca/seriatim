@@ -1,0 +1,26 @@
+Source: golang-seriatim
+Section: devel
+Priority: extra
+Maintainer: Vyatta Package Maintainers <support@brocade.com>
+Build-Depends: debhelper (>= 9), dh-golang, golang-go, golang-dbus-dev
+Standards-Version: 3.9.7
+Homepage: https://github.com/jsouthworth/seriatim
+
+Package: golang-seriatim-dev
+Architecture: all
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Built-Using: ${misc:Built-Using}
+Description: TODO short description
+ TODO: Long description
+ .
+ This package contains the source.
+
+Package: golang-seriatim-dbus-dev
+Architecture: all
+Depends: ${misc:Depends}, ${shlibs:Depends},
+ golang-seriatim-dev
+Built-Using: ${misc:Built-Using}
+Description: TODO short description
+ TODO: Long description
+ .
+ This package contains the source.

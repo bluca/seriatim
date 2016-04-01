@@ -1,0 +1,6 @@
+golang-seriatim (0.1~git20160401-0vyatta1) UNRELEASED; urgency=medium
+
+  [ John Southworth ]
+  * Initial implementation
+
+ -- James Davidson <james.davidson@brocade.com>  Fri, 01 Apr 2016 15:44:03 -0700

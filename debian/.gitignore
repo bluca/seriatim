@@ -1,0 +1,6 @@
+*.debhelper.log
+*.substvars
+files
+golang-seriatim-dev/
+golang-seriatim-dbus-dev/
+tmp/
