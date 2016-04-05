@@ -1,1 +1,2 @@
 skip-private-methods.patch
+skip_error_return_type.patch

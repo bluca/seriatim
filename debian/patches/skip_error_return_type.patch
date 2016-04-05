@@ -1,0 +1,29 @@
+From 4378ceeaa6162eacad98be3b91a2c145f4cfd37d Mon Sep 17 00:00:00 2001
+From: James Davidson <james.davidson@brocade.com>
+Date: Wed, 6 Apr 2016 17:35:38 -0700
+Subject: [PATCH] [dbus] Skip last error return value
+
+When processing methods for introspection, skip an error return value
+if it is the last return value.
+--- a/dbus/dbus.go
++++ b/dbus/dbus.go
+@@ -351,6 +351,7 @@ func (o *Object) getMethods(
+ 	value reflect.Value,
+ 	mapfn func(string) string,
+ ) map[string]*Method {
++	errtype := reflect.TypeOf((*error)(nil)).Elem()
+ 	get_arguments := func(
+ 		num func() int,
+ 		get func(int) reflect.Type,
+@@ -359,6 +360,11 @@ func (o *Object) getMethods(
+ 		var args []introspect.Arg
+ 		for j := 0; j < num(); j++ {
+ 			arg := get(j)
++			if typ == "out" && j == num()-1 {
++				if arg.Implements(errtype) {
++					continue
++				}
++			}
+ 			iarg := introspect.Arg{
+ 				"",
+ 				dbus.SignatureOfType(arg).String(),
