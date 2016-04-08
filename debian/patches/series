@@ -1,3 +1,4 @@
 rename-dbus-supervisor.patch
 add-dbus-connection.patch
 add-addmatch-to-busmanager.patch
+add-support-for-signals.patch
