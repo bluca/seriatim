@@ -1,5 +1,0 @@
-rename-dbus-supervisor.patch
-fix-reflection.patch
-add-dbus-connection.patch
-add-addmatch-to-busmanager.patch
-add-support-for-signals.patch
