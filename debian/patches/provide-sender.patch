@@ -1,0 +1,43 @@
+Supply D-Bus sender to method if in parameters
+
+Some methods need to know the D-Bus sender (i.e., caller) of a
+method. If dbus.Sender is in the parameter list, it is
+populated. However, the parameter is not included in the introspection
+so the parameter is not part of the visible D-Bus interface.
+
+--- a/dbus/dbus.go
++++ b/dbus/dbus.go
+@@ -21,7 +21,8 @@ const (
+ )
+ 
+ var (
+-	errtype = reflect.TypeOf((*error)(nil)).Elem()
++	errtype    = reflect.TypeOf((*error)(nil)).Elem()
++	sendertype = reflect.TypeOf((*dbus.Sender)(nil)).Elem()
+ )
+ 
+ type multiWriterValue struct {
+@@ -178,7 +179,11 @@ func (method *Method) DecodeArguments(
+ 		tp := reflect.TypeOf(method.ArgumentValue(i))
+ 		val := reflect.New(tp)
+ 		pointers[i] = val.Interface()
+-		decode = append(decode, pointers[i])
++		if tp == sendertype {
++			val.Elem().SetString(sender)
++		} else {
++			decode = append(decode, pointers[i])
++		}
+ 	}
+ 
+ 	if len(decode) != len(body) {
+@@ -419,6 +424,10 @@ func (o *Object) getMethods(
+ 					continue
+ 				}
+ 			}
++			if typ == "in" && arg == sendertype {
++				// Hide argument from introspection
++				continue
++			}
+ 			iarg := introspect.Arg{
+ 				"",
+ 				dbus.SignatureOfType(arg).String(),
