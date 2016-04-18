@@ -20,6 +20,11 @@ const (
 	fdtIntrospectable = fdtDBusName + ".Introspectable"
 )
 
+var (
+	errtype    = reflect.TypeOf((*error)(nil)).Elem()
+	sendertype = reflect.TypeOf((*dbus.Sender)(nil)).Elem()
+)
+
 type multiWriterValue struct {
 	atomic.Value
 	writelk sync.Mutex
@@ -174,7 +179,11 @@ func (method *Method) DecodeArguments(
 		tp := reflect.TypeOf(method.ArgumentValue(i))
 		val := reflect.New(tp)
 		pointers[i] = val.Interface()
-		decode = append(decode, pointers[i])
+		if tp == sendertype {
+			val.Elem().SetString(sender)
+		} else {
+			decode = append(decode, pointers[i])
+		}
 	}
 
 	if len(decode) != len(body) {
@@ -197,10 +206,13 @@ func (method *Method) Call(args ...interface{}) ([]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	if ev, ok := ret[method_type.NumOut()-1].(error); ok {
-		if ev != nil {
-			return nil, ev
+	last := method_type.NumOut() - 1
+	if method_type.Out(last) == errtype {
+		// Last parameter is of type error
+		if ret[last] != nil {
+			return nil, ret[last].(error)
 		}
+		return ret[:last], nil
 	}
 	return ret, nil
 }
@@ -399,7 +411,6 @@ func (o *Object) getMethods(
 	value reflect.Value,
 	mapfn func(string) string,
 ) map[string]*Method {
-	errtype := reflect.TypeOf((*error)(nil)).Elem()
 	get_arguments := func(
 		num func() int,
 		get func(int) reflect.Type,
@@ -412,6 +423,10 @@ func (o *Object) getMethods(
 				if arg.Implements(errtype) {
 					continue
 				}
+			}
+			if typ == "in" && arg == sendertype {
+				// Hide argument from introspection
+				continue
 			}
 			iarg := introspect.Arg{
 				"",
