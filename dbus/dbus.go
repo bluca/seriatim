@@ -121,29 +121,15 @@ func (mgr *BusManager) LookupObject(path dbus.ObjectPath) (dbus.ServerObject, bo
 
 func (mgr *BusManager) Call(
 	path dbus.ObjectPath,
-	ifaceName, method string,
+	ifaceName string,
+	method string,
 	args ...interface{},
 ) ([]interface{}, error) {
 	object, ok := mgr.LookupObject(path)
 	if !ok {
 		return nil, dbus.ErrMsgNoObject
 	}
-
-	iface, exists := object.LookupInterface(ifaceName)
-	if !exists {
-		return nil, dbus.ErrMsgUnknownInterface
-	}
-
-	m, exists := iface.LookupMethod(method)
-	if !exists {
-		return nil, dbus.ErrMsgUnknownMethod
-	}
-
-	ret, err := m.Call(args...)
-	if err != nil {
-		return nil, err
-	}
-	return ret, nil
+	return object.(*Object).Call(ifaceName, method, args...)
 }
 
 func (mgr *BusManager) DeliverSignal(iface, member string, signal *dbus.Signal) {
@@ -210,7 +196,7 @@ func (method *Method) Call(args ...interface{}) ([]interface{}, error) {
 	if method_type.Out(last) == errtype {
 		// Last parameter is of type error
 		if ret[last] != nil {
-			return nil, ret[last].(error)
+			return ret[:last], ret[last].(error)
 		}
 		return ret[:last], nil
 	}
@@ -343,6 +329,61 @@ func (o *Object) NewObject(path dbus.ObjectPath, val interface{}) *Object {
 		ps = ps[1:]
 	}
 	return o.newObject(ps, val)
+}
+
+func (o *Object) terminate() {
+	if o.sequent != nil {
+		o.sequent.Terminate(nil)
+	}
+}
+
+func (o *Object) rmChildObject(name string) {
+	o.objects.Update(func(value *atomic.Value) {
+		objects := make(map[string]*Object)
+		for child, obj := range o.getObjects() {
+			objects[child] = obj
+		}
+		if obj, ok := objects[name]; ok {
+			// if there are children replace with placeholder
+			if len(obj.getObjects()) > 0 {
+				object := NewObject(name, nil, nil, o.bus)
+				object.objects = obj.objects
+				objects[name] = object
+			} else {
+				delete(objects, name)
+			}
+			obj.terminate()
+		}
+		value.Store(objects)
+	})
+}
+
+func (o *Object) delObject(path []string) {
+	name := path[0]
+	switch len(path) {
+	case 1:
+		if _, ok := o.LookupObject(name); ok {
+			o.rmChildObject(name)
+		}
+	default:
+		if child, ok := o.LookupObject(name); ok {
+			child.delObject(path[1:])
+			if len(child.getObjects()) == 0 {
+				o.rmChildObject(child.name)
+			}
+		}
+	}
+}
+
+func (o *Object) DeleteObject(path dbus.ObjectPath) {
+	if string(path) == "/" {
+		return
+	}
+	ps := strings.Split(string(path), "/")
+	if ps[0] == "" {
+		ps = ps[1:]
+	}
+	o.delObject(ps)
 }
 
 func (o *Object) lookupObjectPath(path []string) (*Object, bool) {
@@ -580,6 +621,23 @@ func (o *Object) DeliverSignal(iface, member string, signal *dbus.Signal) {
 	}
 }
 
+func (o *Object) Call(
+	ifaceName, method string,
+	args ...interface{},
+) ([]interface{}, error) {
+	iface, exists := o.LookupInterface(ifaceName)
+	if !exists {
+		return nil, dbus.ErrMsgUnknownInterface
+	}
+
+	m, exists := iface.LookupMethod(method)
+	if !exists {
+		return nil, dbus.ErrMsgUnknownMethod
+	}
+
+	return m.Call(args...)
+}
+
 func (o *Object) Introspect() *introspect.Node {
 	getChildren := func() []introspect.Node {
 		children := o.getObjects()
@@ -648,6 +706,9 @@ func (intro intro_fn) Running() bool {
 }
 func (intro intro_fn) Id() uintptr {
 	return reflect.ValueOf(intro).Pointer()
+}
+
+func (intro intro_fn) Terminate(err error) {
 }
 
 func newIntrospection(o *Object) *Interface {
