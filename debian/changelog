@@ -1,6 +1,23 @@
-golang-seriatim (0.1~git20160401-0vyatta1) UNRELEASED; urgency=medium
+golang-seriatim (0.1~git20160420-0vyatta1) UNRELEASED; urgency=medium
 
   [ John Southworth ]
   * Initial implementation
+
+  [ James Davidson ]
+  * [f589e90] Add debianization
+  * [d055bd9] Add skip-private-methods patch
+  * [f2341e4] Add skip_error_return_type patch
+  * [8eb57e3] Remove patches merged upstream
+  * [12cb633] Rename dbus Supervisor to BusManager
+  * [3abbefb] Retain connection in BusManager
+  * [6e443ff] Add AddMatch and DeleteMatch APIs
+  * [675aa81] Add support for D-Bus signal registration and delivery
+  * [2c63b95] Fix reflection of arguments
+  * [33285e7] Sync patches with upstream
+  * [2461a28] Add fix-return-with-error-type.patch
+  * [c4da48a] Add provide-sender.patch
+  * [4544dec] Sync patches with upstream
+  * [c80002e] Add export-sequent-terminate.patch
+  * [247eb99] Add add-object-call-api.patch
 
  -- James Davidson <james.davidson@brocade.com>  Fri, 01 Apr 2016 15:44:03 -0700
