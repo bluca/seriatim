@@ -39,7 +39,8 @@ func (value *multiWriterValue) Update(fn func(*atomic.Value)) {
 // Acts as a root to the object tree
 type BusManager struct {
 	*Object
-	conn *dbus.Conn
+	conn  *dbus.Conn
+	state seriatim.Sequent
 }
 
 type mgrState struct {
@@ -68,18 +69,19 @@ func (s *mgrState) RemoveMatchSignal(conn *dbus.Conn, iface, member string) {
 }
 
 func NewBusManager(
-	busfn func() (*dbus.Conn, error),
+	busfn func(dbus.Handler, dbus.SignalHandler) (*dbus.Conn, error),
 	name string,
 ) (*BusManager, error) {
 	state := &mgrState{sigref: make(map[string]uint64)}
-	handler := &BusManager{Object: NewObject("", state, nil, nil)}
+	handler := &BusManager{
+		Object: NewObject("", nil, nil, nil),
+		state:  seriatim.NewSupervisedSequent(state, nil),
+	}
 	handler.bus = handler
-	conn, err := busfn()
+	conn, err := busfn(handler, handler)
 	if err != nil {
 		return nil, err
 	}
-	conn.RegisterHandler(handler)
-	conn.RegisterSignalHandler(handler)
 	err = conn.Auth(nil)
 	if err != nil {
 		conn.Close()
@@ -100,11 +102,11 @@ func NewBusManager(
 }
 
 func NewSessionBusManager(name string) (*BusManager, error) {
-	return NewBusManager(dbus.SessionBusPrivate, name)
+	return NewBusManager(dbus.SessionBusPrivateHandler, name)
 }
 
 func NewSystemBusManager(name string) (*BusManager, error) {
-	return NewBusManager(dbus.SystemBusPrivate, name)
+	return NewBusManager(dbus.SystemBusPrivateHandler, name)
 }
 
 func (mgr *BusManager) LookupObject(path dbus.ObjectPath) (dbus.ServerObject, bool) {
@@ -528,7 +530,7 @@ func (o *Object) getSignals(
 			sequent: o.sequent,
 		}
 		signals[mapped_name] = signal
-		o.bus.sequent.Call("AddMatchSignal", o.bus.conn, dbusIfaceName, mapped_name)
+		o.bus.state.Call("AddMatchSignal", o.bus.conn, dbusIfaceName, mapped_name)
 	}
 	return signals
 }
