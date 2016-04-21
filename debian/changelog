@@ -20,4 +20,10 @@ golang-seriatim (0.1~git20160420-0vyatta1) UNRELEASED; urgency=medium
   * [c80002e] Add export-sequent-terminate.patch
   * [247eb99] Add add-object-call-api.patch
 
+  [ John Southworth ]
+  * [6247d8a] Do auto conversion of types in method calls
+
+  [ James Davidson ]
+  * [71960e3] Sync patches with upstream
+
  -- James Davidson <james.davidson@brocade.com>  Fri, 01 Apr 2016 15:44:03 -0700
