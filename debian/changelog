@@ -1,4 +1,4 @@
-golang-seriatim (0.1~git20160421-0vyatta1) UNRELEASED; urgency=medium
+golang-seriatim (0.1~git20160427-0vyatta1) UNRELEASED; urgency=medium
 
   [ John Southworth ]
   * Initial implementation
@@ -26,5 +26,10 @@ golang-seriatim (0.1~git20160421-0vyatta1) UNRELEASED; urgency=medium
   [ James Davidson ]
   * [71960e3] Sync patches with upstream
   * [067796e] Sync patches with upstream
+  * [79da2e6] Sync patches with upstream
+  * [748114e] Fix key generation for signal ref counting
+  * [397faa9] Remove listeners on terminate
+  * [9a1fcf5] Add remove-signals-on-terminate.patch
+  * [b3908a5] Sync patches with upstream
 
  -- James Davidson <james.davidson@brocade.com>  Fri, 01 Apr 2016 15:44:03 -0700
