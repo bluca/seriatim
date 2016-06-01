@@ -32,4 +32,7 @@ golang-seriatim (0.1~git20160427-0vyatta1) UNRELEASED; urgency=medium
   * [9a1fcf5] Add remove-signals-on-terminate.patch
   * [b3908a5] Sync patches with upstream
 
+  [ Andrew Johnson ]
+  * [681185b] Add ability to register name after setting up bus
+
  -- James Davidson <james.davidson@brocade.com>  Fri, 01 Apr 2016 15:44:03 -0700
